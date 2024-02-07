@@ -1,7 +1,10 @@
-MODULE=alu
+MODULE=ModuleName
 
 .PHONY:sim
 sim: waves
+
+.PHONY:all
+all: (MODULE).v
 
 .PHONY:verilate
 verilate: .stamp.verilate
@@ -25,11 +28,16 @@ waveform.vcd: ./obj_dir/V$(MODULE)
 	@echo "### BUILDING SIM ###"
 	make -C obj_dir -f V$(MODULE).mk V$(MODULE)
 
-.stamp.verilate: $(MODULE).v tb_$(MODULE).cpp
+.stamp.verilate: generated/$(MODULE).v tb_$(MODULE).cpp (MODULE).v
 	@echo
 	@echo "### VERILATING ###"
-	verilator  --trace --x-assign unique --x-initial unique -cc $(MODULE).v --exe tb_$(MODULE).cpp
+	verilator -Wall --trace --x-assign unique --x-initial unique -cc generated/$(MODULE).v --exe tb_$(MODULE).cpp
 	@touch .stamp.verilate
+
+(MODULE).v: src/main/scala/$(MODULE).scala
+	@echo
+	@echo "### Generting Hardware code with sbt ###"
+	sbt run
 
 .PHONY:lint
 lint: $(MODULE).v
